@@ -57,10 +57,18 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  void _rolld20() {
-    int result = random.nextInt(20) + 1;
-    Roll roll =
-        Roll(result: result, rolled: 'd20', userId: 'Gwindolyn', shouldOnlyShowResult: false, rolledAt: DateTime.now());
+  void _roll(int dice, {int modifiers = 0}) {
+    int rollResult = random.nextInt(dice) + 1;
+    int finalResult = rollResult + modifiers;
+    final String modifierString = modifiers == 0 ? '' : (modifiers.sign < 0 ? '-' : '+') + modifiers.abs().toString();
+    Roll roll = Roll(
+      result: rollResult.toString() + modifierString,
+      rolled: 'd' + dice.toString() + modifierString,
+      finalResult: finalResult,
+      rolledAt: DateTime.now(),
+      userId: 'Gwindolyn',
+      shouldOnlyShowResult: false,
+    );
     rollRef.add(roll.toJson());
   }
 
@@ -71,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: StreamBuilder(
-          stream: rollRef.orderBy('rolledAt').onSnapshot,
+          stream: rollRef.orderBy('rolledAt', 'desc').limit(20).onSnapshot,
           builder: (context, snapshot) {
             if (snapshot.hasError) return Text(snapshot.error.toString());
             if (!snapshot.hasData) return CircularProgressIndicator();
@@ -80,17 +88,36 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: snapshot.data.docs.map<Widget>((fs.DocumentSnapshot doc) {
-                  Roll roll = Roll.fromJson(doc.data(), doc.id);
-                  return Text(roll.result.toString());
+                  return RollDisplay(roll: Roll.fromJson(doc.data(), doc.id));
                 }).toList(),
               ),
             );
           }),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _rolld20(),
+        onPressed: () => _roll(20, modifiers: -2),
         tooltip: 'Roll d20',
         child: FaIcon(FontAwesomeIcons.diceD20),
       ),
+    );
+  }
+}
+
+class RollDisplay extends StatelessWidget {
+  final Roll roll;
+
+  RollDisplay({@required this.roll});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Text(roll.rolled + " "),
+        Text(roll.result + " = "),
+        Text(
+          roll.finalResult.toString(),
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 }

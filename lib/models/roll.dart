@@ -1,17 +1,19 @@
 class Roll {
   String id;
-  int result;
+  String result;
+  int finalResult;
   String userId;
   bool shouldOnlyShowResult;
   String rolled;
   DateTime rolledAt;
 
-  Roll({this.id, this.result, this.userId, this.shouldOnlyShowResult, this.rolled, this.rolledAt});
+  Roll({this.id, this.result, this.finalResult, this.userId, this.shouldOnlyShowResult, this.rolled, this.rolledAt});
 
   Roll.fromJson(Map<String, dynamic> json, String id)
       : this(
           id: id,
           result: json['result'],
+          finalResult: json['finalResult'],
           userId: json['userId'],
           shouldOnlyShowResult: json['shouldOnlyShowResult'],
           rolled: json['rolled'],
@@ -21,6 +23,7 @@ class Roll {
   Map<String, dynamic> toJson() {
     return {
       'result': result,
+      'finalResult': finalResult,
       'userId': userId,
       'rolled': rolled,
       'shouldOnlyShowResults': shouldOnlyShowResult,
