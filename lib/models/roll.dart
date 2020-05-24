@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class Result {
@@ -21,7 +20,7 @@ class Result {
       if (fullMatch.contains('d')) {
         parts.addAll(parseRoll(fullMatch));
       } else {
-        Modifier modifier = Modifier(modifier: int.parse(fullMatch));
+        Modifier modifier = Modifier(int.parse(fullMatch));
         parts.add(modifier);
       }
     }
@@ -54,11 +53,11 @@ class Result {
   }
 
   List<ResultPart> parseDoubleRoll(String match) {
-    DoubleRoll result = DoubleRoll();
-    result.advantage = match.contains("a");
+    bool advantage = match.contains("a");
     String rollString = (match.replaceAll(new RegExp(r'[ai]?'), ''));
-    result.first = parseRoll(rollString)[0];
-    result.second = parseRoll(rollString)[0];
+    Roll first = parseRoll(rollString)[0];
+    Roll second = parseRoll(rollString)[0];
+    DoubleRoll result = DoubleRoll(first, second, advantage);
     return [result];
   }
 
@@ -72,9 +71,7 @@ class Result {
     int die = parseDie(match);
 
     for (int i = 0; i < amount.abs(); i++) {
-      Roll roll = Roll();
-      roll.die = die;
-      roll.negated = negated;
+      Roll roll = Roll(die, negated);
       result.add(roll);
     }
     return result;
@@ -83,7 +80,7 @@ class Result {
   Result.fromJson(Map<String, dynamic> json)
       : user = json['user'],
         time = json['time'],
-        parts = json['parts'].map((p) {
+        parts = json['parts'].map<ResultPart>((p) {
           switch (p['type']) {
             case 'roll':
               return Roll.fromJson(p);
@@ -95,7 +92,7 @@ class Result {
               assert(false);
               return null;
           }
-        });
+        }).toList();
 
   Map<String, dynamic> toJson() => {
         'hidden': hidden,
@@ -118,10 +115,10 @@ abstract class ResultPart {
 }
 
 class Roll extends ResultPart {
-  int die;
-  bool negated;
+  final int die;
+  final bool negated; // = false;
 
-  Roll();
+  Roll(this.die, this.negated);
 
   @override
   int get effectiveResult => negated ? -result : result;
@@ -173,6 +170,7 @@ class Roll extends ResultPart {
 
   Roll.fromJson(Map<String, dynamic> json)
       : die = json['die'],
+        negated = json['negated'],
         super(result: json['result']);
 
   int evaluate() {
@@ -192,11 +190,11 @@ class Roll extends ResultPart {
 }
 
 class DoubleRoll extends ResultPart {
-  Roll first;
-  Roll second;
-  bool advantage;
+  final Roll first;
+  final Roll second;
+  final bool advantage;
 
-  DoubleRoll();
+  DoubleRoll(this.first, this.second, this.advantage);
 
   DoubleRoll.fromJson(Map<String, dynamic> json)
       : first = Roll.fromJson(json['first']),
@@ -230,7 +228,7 @@ class DoubleRoll extends ResultPart {
 }
 
 class Modifier extends ResultPart {
-  int modifier;
+  final int modifier;
   @override
   int get result => modifier;
 
@@ -245,7 +243,7 @@ class Modifier extends ResultPart {
     return;
   }
 
-  Modifier({this.modifier});
+  Modifier(this.modifier);
 
   Modifier.fromJson(Map<String, dynamic> json) : modifier = json['modifier'];
 

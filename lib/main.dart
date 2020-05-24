@@ -1,5 +1,4 @@
 import 'dart:html';
-import 'dart:math';
 
 import 'package:firebase/firebase.dart' as fb;
 import 'package:firebase/firestore.dart' as fs;
@@ -48,24 +47,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final random = Random.secure();
   fs.CollectionReference rollRef;
-  fs.CollectionReference userRef;
-  Result result;
 
   @override
   void initState() {
     final store = fb.firestore();
     rollRef = store.collection('Rolls');
-    userRef = store.collection('Users');
     super.initState();
   }
 
   void onRoll(String roll) {
-    setState(() {
-      result = Result.fromString(roll);
-      result.evaluate();
-    });
+    Result result;
+    result = Result.fromString(roll);
+    result.time = DateTime.now();
+    result.user = 'Kitty';
+    result.hidden = false;
+    result.evaluate();
+    rollRef.add(result.toJson());
   }
 
   @override
@@ -77,41 +75,35 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         children: <Widget>[
           RollInputArea(onRoll: (String roll) => onRoll(roll)),
-          result != null ? RollDisplay(result: result) : Container(),
+          StreamBuilder(
+              stream: rollRef.orderBy('time', 'desc').onSnapshot,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) return Text(snapshot.error.toString());
+                if (!snapshot.hasData) return CircularProgressIndicator();
+                return Center(
+                  child: Row(
+                    children: ['Kitty', 'Emlyn', 'Dyri', 'DM']
+                        .map(
+                          (String name) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: snapshot.data.docs
+                                  .where((doc) => doc.data()['user'] == name)
+                                  .take(10)
+                                  .map<Widget>((fs.DocumentSnapshot doc) {
+                                return Result.fromJson(doc.data()).build();
+                              }).toList()
+                                    ..insert(0, Text(name, style: TextStyle(fontSize: 30))),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                );
+              }),
         ],
       ),
-      //StreamBuilder(
-      //stream: rollRef.orderBy('rolledAt', 'desc').onSnapshot,
-      ////stream: rollRef.orderBy('rolledAt', 'desc').limit(20).onSnapshot,
-      //builder: (context, snapshot) {
-      //if (snapshot.hasError) return Text(snapshot.error.toString());
-      //if (!snapshot.hasData) return CircularProgressIndicator();
-
-      //return Center(
-      //child: Row(
-      ////children: ['Gwindolyn', 'Tye', 'Dyri', 'DM']
-      //children: ['Kitty', 'Emlyn', 'Dyri', 'DM']
-      //.map(
-      //(String name) => Column(
-      //mainAxisAlignment: MainAxisAlignment.center,
-      //children: snapshot.data.docs
-      //.where((doc) => doc.data()['userId'] == name)
-      //.take(10)
-      //.map<Widget>((fs.DocumentSnapshot doc) {
-      //return RollDisplay(roll: Roll.fromJson(doc.data(), doc.id));
-      //}).toList()
-      //..insert(0, Text(name)),
-      //),
-      //)
-      //.toList(),
-      //),
-      //);
-      //}),
-      //FloatingActionButton: FloatingActionButton(
-      //  onPressed: () => _roll('4d6+5'),
-      //  tooltip: 'Roll d20',
-      //  child: FaIcon(FontAwesomeIcons.diceD20),
-      //),
     );
   }
 }
@@ -158,11 +150,13 @@ class _RollInputAreaState extends State<RollInputArea> {
               children: (List<int>.generate(8, (int i) => i - 2).map((int modifier) {
                 return RaisedButton(
                   onPressed: () {
-                    textController.text = textController.text + (modifier.sign > 0 ? '+' : '-');
-                    textController.text = textController.text + modifier.toString();
+                    if (modifier != 0) {
+                      textController.text = textController.text + (modifier.sign > 0 ? '+' : '-');
+                      textController.text = textController.text + modifier.toString();
+                    }
                     roll();
                   },
-                  child: Text(modifier.toString()),
+                  child: Text(modifier == 0 ? 'Roll' : modifier.toString()),
                 );
               })).toList(),
             ),
@@ -186,16 +180,5 @@ class _RollInputAreaState extends State<RollInputArea> {
         ),
       ],
     );
-  }
-}
-
-class RollDisplay extends StatelessWidget {
-  final Result result;
-
-  RollDisplay({@required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    return result.build();
   }
 }
