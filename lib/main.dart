@@ -1,3 +1,4 @@
+import 'dart:html';
 import 'dart:math';
 
 import 'package:firebase/firebase.dart' as fb;
@@ -49,27 +50,22 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final random = Random.secure();
   fs.CollectionReference rollRef;
+  fs.CollectionReference userRef;
+  Result result;
 
   @override
   void initState() {
     final store = fb.firestore();
     rollRef = store.collection('Rolls');
+    userRef = store.collection('Users');
     super.initState();
   }
 
-  void _roll(int dice, {int modifiers = 0}) {
-    int rollResult = random.nextInt(dice) + 1;
-    int finalResult = rollResult + modifiers;
-    final String modifierString = modifiers == 0 ? '' : (modifiers.sign < 0 ? '-' : '+') + modifiers.abs().toString();
-    Roll roll = Roll(
-      result: rollResult.toString() + modifierString,
-      rolled: 'd' + dice.toString() + modifierString,
-      finalResult: finalResult,
-      rolledAt: DateTime.now(),
-      userId: 'Gwindolyn',
-      shouldOnlyShowResult: false,
-    );
-    rollRef.add(roll.toJson());
+  void onRoll(String roll) {
+    setState(() {
+      result = Result.fromString(roll);
+      result.evaluate();
+    });
   }
 
   @override
@@ -78,46 +74,128 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: StreamBuilder(
-          stream: rollRef.orderBy('rolledAt', 'desc').limit(20).onSnapshot,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) return Text(snapshot.error.toString());
-            if (!snapshot.hasData) return CircularProgressIndicator();
-
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: snapshot.data.docs.map<Widget>((fs.DocumentSnapshot doc) {
-                  return RollDisplay(roll: Roll.fromJson(doc.data(), doc.id));
-                }).toList(),
-              ),
-            );
-          }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _roll(20, modifiers: -2),
-        tooltip: 'Roll d20',
-        child: FaIcon(FontAwesomeIcons.diceD20),
+      body: Column(
+        children: <Widget>[
+          RollInputArea(onRoll: (String roll) => onRoll(roll)),
+          result != null ? RollDisplay(result: result) : Container(),
+        ],
       ),
+      //StreamBuilder(
+      //stream: rollRef.orderBy('rolledAt', 'desc').onSnapshot,
+      ////stream: rollRef.orderBy('rolledAt', 'desc').limit(20).onSnapshot,
+      //builder: (context, snapshot) {
+      //if (snapshot.hasError) return Text(snapshot.error.toString());
+      //if (!snapshot.hasData) return CircularProgressIndicator();
+
+      //return Center(
+      //child: Row(
+      ////children: ['Gwindolyn', 'Tye', 'Dyri', 'DM']
+      //children: ['Kitty', 'Emlyn', 'Dyri', 'DM']
+      //.map(
+      //(String name) => Column(
+      //mainAxisAlignment: MainAxisAlignment.center,
+      //children: snapshot.data.docs
+      //.where((doc) => doc.data()['userId'] == name)
+      //.take(10)
+      //.map<Widget>((fs.DocumentSnapshot doc) {
+      //return RollDisplay(roll: Roll.fromJson(doc.data(), doc.id));
+      //}).toList()
+      //..insert(0, Text(name)),
+      //),
+      //)
+      //.toList(),
+      //),
+      //);
+      //}),
+      //FloatingActionButton: FloatingActionButton(
+      //  onPressed: () => _roll('4d6+5'),
+      //  tooltip: 'Roll d20',
+      //  child: FaIcon(FontAwesomeIcons.diceD20),
+      //),
+    );
+  }
+}
+
+class RollInputArea extends StatefulWidget {
+  final void Function(String rollString) onRoll;
+
+  RollInputArea({this.onRoll});
+
+  @override
+  _RollInputAreaState createState() => _RollInputAreaState();
+}
+
+class _RollInputAreaState extends State<RollInputArea> {
+  TextEditingController textController;
+
+  @override
+  void initState() {
+    textController = TextEditingController();
+    super.initState();
+  }
+
+  void roll() {
+    widget.onRoll(textController.text);
+    textController.text = '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Column(
+              children: {4, 6, 8, 10, 12, 20, 100}
+                  .map((int die) => FloatingActionButton(
+                        child: FaIcon(Roll.iconForDie(die)),
+                        heroTag: 'd' + die.toString(),
+                        onPressed: () => textController.text = textController.text + 'd' + die.toString(),
+                      ))
+                  .toList(),
+            ),
+            Column(
+              children: (List<int>.generate(8, (int i) => i - 2).map((int modifier) {
+                return RaisedButton(
+                  onPressed: () {
+                    textController.text = textController.text + (modifier.sign > 0 ? '+' : '-');
+                    textController.text = textController.text + modifier.toString();
+                    roll();
+                  },
+                  child: Text(modifier.toString()),
+                );
+              })).toList(),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Expanded(
+                  child: TextField(
+                controller: textController,
+              )),
+              RaisedButton(
+                child: Text('Submit'),
+                onPressed: () => roll(),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
 class RollDisplay extends StatelessWidget {
-  final Roll roll;
+  final Result result;
 
-  RollDisplay({@required this.roll});
+  RollDisplay({@required this.result});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Text(roll.rolled + " "),
-        Text(roll.result + " = "),
-        Text(
-          roll.finalResult.toString(),
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
+    return result.build();
   }
 }

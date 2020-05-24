@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 class Result {
   List<ResultPart> parts = [];
   String user;
@@ -22,6 +24,16 @@ class Result {
         Modifier modifier = Modifier(modifier: int.parse(fullMatch));
         parts.add(modifier);
       }
+    }
+  }
+
+  Widget build() {
+    return Row(children: parts.map((ResultPart part) => part.build()).toList()..add(Text(' = ' + result.toString())));
+  }
+
+  void evaluate() {
+    for (ResultPart part in parts) {
+      part.evaluate();
     }
   }
 
@@ -98,8 +110,9 @@ class Result {
 abstract class ResultPart {
   int result;
   int get effectiveResult => result;
-  //Widget build();
+  Widget build();
   Map<String, dynamic> toJson();
+  void evaluate();
 
   ResultPart({this.result});
 }
@@ -112,6 +125,51 @@ class Roll extends ResultPart {
 
   @override
   int get effectiveResult => negated ? -result : result;
+
+  static IconData iconForDie(int die) {
+    switch (die) {
+      case 4:
+        return FontAwesomeIcons.diceD4;
+      case 6:
+        return FontAwesomeIcons.diceD6;
+      case 8:
+        return FontAwesomeIcons.diceD8;
+      case 10:
+        return FontAwesomeIcons.diceD10;
+      case 12:
+        return FontAwesomeIcons.diceD12;
+      case 20:
+        return FontAwesomeIcons.diceD20;
+      case 100:
+        return FontAwesomeIcons.percent;
+      default:
+        return FontAwesomeIcons.questionCircle;
+    }
+  }
+
+  @override
+  Widget build() {
+    Color color =
+        (result == 1 && die == 20) ? Colors.red : (result == die && die == 20) ? Colors.green : Colors.black26;
+    return Row(
+      children: <Widget>[
+        Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            Icon(
+              iconForDie(die),
+              color: color,
+              size: 40,
+            ),
+            Text(
+              result.toString(),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
   Roll.fromJson(Map<String, dynamic> json)
       : die = json['die'],
@@ -149,6 +207,20 @@ class DoubleRoll extends ResultPart {
     return advantage ? max(first.result, second.result) : min(first.result, second.result);
   }
 
+  Widget build() {
+    return Row(children: [
+      Text('(', style: TextStyle(fontSize: 30)),
+      first.build(),
+      second.build(),
+      Text(')', style: TextStyle(fontSize: 30)),
+    ]);
+  }
+
+  void evaluate() {
+    first.evaluate();
+    second.evaluate();
+  }
+
   Map<String, dynamic> toJson() => {
         "type": "doubleroll",
         "advantage": advantage,
@@ -161,6 +233,17 @@ class Modifier extends ResultPart {
   int modifier;
   @override
   int get result => modifier;
+
+  Widget build() {
+    return Text(
+      (modifier.sign > 0 ? '+' : '') + modifier.toString(),
+      style: TextStyle(fontSize: 20),
+    );
+  }
+
+  void evaluate() {
+    return;
+  }
 
   Modifier({this.modifier});
 
