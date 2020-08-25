@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Roll {
   String id;
   String result;
@@ -7,27 +9,35 @@ class Roll {
   String rolled;
   DateTime rolledAt;
 
-  Roll({this.id, this.result, this.finalResult, this.userId, this.shouldOnlyShowResult, this.rolled, this.rolledAt});
+  Roll(
+      {@required this.id,
+      this.result,
+      this.finalResult,
+      this.userId,
+      this.shouldOnlyShowResult,
+      this.rolled,
+      this.rolledAt});
 
-  Roll.fromJson(Map<String, dynamic> json, String id)
+  Roll.fromJson(Map<String, dynamic> json)
       : this(
-          id: id,
+          id: json['id'],
           result: json['result'],
           finalResult: json['finalResult'],
           userId: json['userId'],
           shouldOnlyShowResult: json['shouldOnlyShowResult'],
           rolled: json['rolled'],
-          rolledAt: json['rolledAt'],
+          rolledAt: DateTime.parse(json['rolledAt']),
         );
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'result': result,
       'finalResult': finalResult,
       'userId': userId,
       'rolled': rolled,
       'shouldOnlyShowResults': shouldOnlyShowResult,
-      'rolledAt': rolledAt,
+      'rolledAt': rolledAt.toIso8601String(),
     };
   }
 }
