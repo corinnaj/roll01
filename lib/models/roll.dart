@@ -28,7 +28,11 @@ class Result {
 
   Widget build() {
     print(parts);
-    return Row(children: parts.map((ResultPart part) => part.build()).toList()..add(Text(' = ' + result.toString())));
+    return Row(children: <Widget>[
+      Text(this.user),
+      ...parts.map((ResultPart part) => part.build()),
+      Text(' = ' + result.toString()),
+    ]);
   }
 
   void evaluate() {
@@ -80,7 +84,6 @@ class Result {
 
   Result.fromJson(Map<String, dynamic> json)
       : user = json['user'],
-        //time = json['time'],
         time = DateTime.parse(json['time']),
         parts = json['parts'].map<ResultPart>((p) {
           switch (p['type']) {

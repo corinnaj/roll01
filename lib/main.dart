@@ -175,16 +175,6 @@ class _MyHomePageState extends State<MyHomePage> {
     result.hidden = false;
     result.evaluate();
 
-    //Roll roll = Roll(
-    //id: Uuid().v4(),
-    //result: rollResult.toString() + modifierString,
-    //rolled: 'd' + dice.toString() + modifierString,
-    //finalResult: finalResult,
-    //rolledAt: DateTime.now(),
-    //userId: 'Gwindolyn',
-    //shouldOnlyShowResult: false,
-    //);
-
     emitCommand('roll', result.toJson());
     return result;
   }
@@ -202,74 +192,56 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      //body: Column(
-      //children: <Widget>[
-      //RollInputArea(onRoll: (String roll) => onRoll(roll)),
-      //StreamBuilder(
-      //stream: rollRef.orderBy('time', 'desc').onSnapshot,
-      //builder: (context, snapshot) {
-      //if (snapshot.hasError) return Text(snapshot.error.toString());
-      //if (!snapshot.hasData) return CircularProgressIndicator();
-      //return Center(
-      //child: Row(
-      //children: ['Kitty', 'Emlyn', 'Dyri', 'DM']
-      //.map(
-      //(String name) => Padding(
-      //padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      //child: Column(
-      //mainAxisAlignment: MainAxisAlignment.center,
-      //children: snapshot.data.docs
-      //.where((doc) => doc.data()['user'] == name)
-      //.take(10)
-      //.map<Widget>((fs.DocumentSnapshot doc) {
-      //return Result.fromJson(doc.data()).build();
-      //}).toList()
-      //..insert(0, Text(name, style: TextStyle(fontSize: 30))),
-      //),
-      //),
-      //)
-      //.toList(),
-      //),
-      //);
-      //}),
-      //],
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            EncounterTracker(
-              initiatives: initiatives,
-              initiativeStep: initiativeStep,
-            ),
-            ...results.map<Widget>((roll) {
-              return roll.build();
-            }),
-            if (gridState.visible)
-              Container(
-                width: 400,
-                height: 400,
-                child: MapGrid(
-                  rows: gridState.rows,
-                  columns: gridState.columns,
-                  characters: characters,
-                  onMove: (x, y) => emitCommand('move_character', {'x': x, 'y': y, 'name': playerName}),
+      body: Row(
+        children: [
+          Expanded(
+            flex: 6,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                EncounterTracker(
+                  initiatives: initiatives,
+                  initiativeStep: initiativeStep,
                 ),
-              ),
-            RaisedButton.icon(
-                onPressed: () => _addInitiative(), icon: Icon(Icons.play_arrow), label: Text('Add Initiative')),
-            RaisedButton.icon(
-                onPressed: () => emitCommand('clear_initiative'),
-                icon: Icon(Icons.smoking_rooms),
-                label: Text('Start New Encounter')),
-            RaisedButton.icon(
-                onPressed: () => emitCommand('step_initiative'),
-                icon: Icon(Icons.skip_next),
-                label: Text('Step Inititive')),
-            RollInputArea(
-              onRoll: (s) => _roll(s),
+                if (gridState.visible)
+                  Container(
+                    width: 400,
+                    height: 400,
+                    child: MapGrid(
+                      rows: gridState.rows,
+                      columns: gridState.columns,
+                      characters: characters,
+                      onMove: (x, y) => emitCommand('move_character', {'x': x, 'y': y, 'name': playerName}),
+                    ),
+                  ),
+                RaisedButton.icon(
+                    onPressed: () => _addInitiative(), icon: Icon(Icons.play_arrow), label: Text('Add Initiative')),
+                RaisedButton.icon(
+                    onPressed: () => emitCommand('clear_initiative'),
+                    icon: Icon(Icons.smoking_rooms),
+                    label: Text('Start New Encounter')),
+                RaisedButton.icon(
+                    onPressed: () => emitCommand('step_initiative'),
+                    icon: Icon(Icons.skip_next),
+                    label: Text('Step Inititive')),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                ...results.map<Widget>((roll) {
+                  return roll.build();
+                }),
+                RollInputArea(
+                  onRoll: (s) => _roll(s),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
