@@ -27,6 +27,7 @@ class Result {
   }
 
   Widget build() {
+    print(parts);
     return Row(children: parts.map((ResultPart part) => part.build()).toList()..add(Text(' = ' + result.toString())));
   }
 
@@ -79,7 +80,8 @@ class Result {
 
   Result.fromJson(Map<String, dynamic> json)
       : user = json['user'],
-        time = json['time'],
+        //time = json['time'],
+        time = DateTime.parse(json['time']),
         parts = json['parts'].map<ResultPart>((p) {
           switch (p['type']) {
             case 'roll':
@@ -96,7 +98,7 @@ class Result {
 
   Map<String, dynamic> toJson() => {
         'hidden': hidden,
-        'time': time,
+        'time': time.toIso8601String(),
         'user': user,
         'parts': parts.map((p) => p.toJson()).toList(),
       };

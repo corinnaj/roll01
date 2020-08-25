@@ -2,6 +2,8 @@
 fa-pro/
 fa-pro.zip
 
+server/node_modules
+
 # Miscellaneous
 *.class
 *.log
