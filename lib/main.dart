@@ -2,7 +2,9 @@ import 'dart:html';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:roll01/models/roll.dart';
+import 'package:roll01/models/user.dart';
 import 'package:roll01/widgets/encounter.dart';
 import 'package:roll01/widgets/map.dart';
 import 'package:roll01/widgets/rolling.dart';
@@ -48,6 +50,7 @@ class MyApp extends StatelessWidget {
       title: 'Roll01',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        accentColor: Colors.indigo,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(
@@ -75,6 +78,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Map<String, CharacterState> characters = {};
   String playerName;
   GridState gridState = GridState.init();
+
+  List<User> users = [
+    User('Corinna', FontAwesomeIcons.duotoneHandHoldingMagic),
+    User('Tom', FontAwesomeIcons.duotoneShield),
+  ];
 
   bool hasJoined = false;
 
@@ -188,6 +196,23 @@ class _MyHomePageState extends State<MyHomePage> {
     doCommand(data);
   }
 
+  Widget buildRollsArea() {
+    return Container(
+      color: Colors.black12,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          ...results.map<Widget>((roll) {
+            return roll.build();
+          }),
+          RollInputArea(
+            onRoll: (s) => _roll(s),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -229,20 +254,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                ...results.map<Widget>((roll) {
-                  return roll.build();
-                }),
-                RollInputArea(
-                  onRoll: (s) => _roll(s),
-                ),
-              ],
-            ),
-          ),
+          Expanded(child: buildRollsArea()),
         ],
       ),
     );

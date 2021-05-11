@@ -86,4 +86,8 @@ void main() {
     expect(result.parts[1], TypeMatcher<Modifier>());
     expect((result.parts[1] as Modifier).modifier, 3);
   });
+
+  test('allow spaces', () {
+    Result result = Result.fromString('d20 + 1');
+  });
 }

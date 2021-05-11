@@ -36,36 +36,49 @@ class _RollInputAreaState extends State<RollInputArea> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            Wrap(
-              direction: Axis.vertical,
-              children: {4, 6, 8, 10, 12, 20, 100}
-                  .map((int die) => FloatingActionButton(
-                        child: FaIcon(Roll.iconForDie(die)),
-                        heroTag: 'd' + die.toString(),
-                        onPressed: () => addText('d' + die.toString(), concat: true),
-                      ))
-                  .toList(),
-            ),
-            Column(
-              children: (List<int>.generate(7, (int i) => i - 2).map((int modifier) {
-                return RaisedButton(
-                  onPressed: () {
-                    if (modifier != 0) {
-                      addText(modifier.sign > 0 ? '+' : '');
-                      addText(modifier.toString());
-                    }
-                    roll();
-                  },
-                  child: Text(modifier == 0 ? 'Roll' : modifier.toString()),
-                );
-              })).toList(),
-            ),
-          ],
+        Wrap(
+          runSpacing: 6.0,
+          spacing: 6.0,
+          children: {4, 6, 8, 10, 12, 20, 100}
+              .map((int die) => FloatingActionButton(
+                    elevation: 2,
+                    focusElevation: 4,
+                    child: FaIcon(Roll.iconForDie(die)),
+                    heroTag: 'd' + die.toString(),
+                    onPressed: () => addText('d' + die.toString(), concat: true),
+                  ))
+              .toList(),
+        ),
+        SizedBox(height: 20),
+        Wrap(
+          runSpacing: 12.0,
+          spacing: 12.0,
+          children: (List<int>.generate(7, (int i) => i - 2).map((int modifier) {
+            return Container(
+              width: 50,
+              height: 50,
+              child: RaisedButton(
+                elevation: 2,
+                focusElevation: 4,
+                color: Theme.of(context).accentColor,
+                onPressed: () {
+                  if (modifier != 0) {
+                    addText(modifier.sign > 0 ? '+' : '');
+                    addText(modifier.toString());
+                  }
+                  roll();
+                },
+                child: Text(
+                  modifier.sign > 0 ? '+' + modifier.toString() : modifier.toString(),
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+                //child: Text(modifier == 0 ? 'Roll' : modifier.toString()),
+              ),
+            );
+          })).toList(),
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
